@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens; // Importa el trait de Sanctum
 use App\Models\Role; // Importa el modelo Role
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable; // Asegúrate de incluirlo aquí
 
     /**
      * Los atributos que se pueden asignar masivamente.
@@ -20,7 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role_id', // Asegúrate de incluirlo para asignar el rol
+        'role_id',
     ];
 
     /**
@@ -48,7 +49,6 @@ class User extends Authenticatable
 
     /**
      * Relación con el modelo Role.
-     * Cada usuario pertenece a un único rol.
      */
     public function role()
     {
