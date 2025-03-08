@@ -12,15 +12,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Opción A: Agregar EnsureFrontendRequestsAreStateful al grupo 'api'
+        // Agregar EnsureFrontendRequestsAreStateful al grupo 'api'
         $middleware->group('api', [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
-        // Opción B (alternativa): Aplicarlo globalmente (a todas las rutas):
-        // $middleware->global(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
+        // Registrar alias de middleware en forma de array
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })
     ->create();
+
