@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Character;
 use App\Models\Planet;
 use App\Models\Film;
+use App\Models\SearchLog;
 use App\Services\SwapiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,14 +20,21 @@ class SwapiController extends Controller
     }
 
     /**
-     * Obtiene un personaje. Si ya existe en la base de datos, se retorna;
+     * Obtiene un personaje. Si ya existe en la base de datos se retorna;
      * de lo contrario se consulta SWAPI, se almacena y se retorna.
+     * Se registra en search_logs la consulta.
      */
     public function getCharacter(Request $request, $id)
     {
         // Revisar si existe en base de datos
         $character = Character::with(['planet', 'films', 'vehicles', 'species'])->find($id);
         if ($character) {
+            // Registrar log de búsqueda
+            SearchLog::create([
+                'user_id'     => $request->user()->id,
+                'search_type' => 'character',
+                'search_id'   => $id,
+            ]);
             return response()->json($character);
         }
 
@@ -50,13 +58,13 @@ class SwapiController extends Controller
                     ['name' => $planetData['name']],
                     [
                         'rotation_period' => $planetData['rotation_period'] ?? null,
-                        'orbital_period' => $planetData['orbital_period'] ?? null,
-                        'diameter' => $planetData['diameter'] ?? null,
-                        'climate' => $planetData['climate'] ?? null,
-                        'gravity' => $planetData['gravity'] ?? null,
-                        'terrain' => $planetData['terrain'] ?? null,
-                        'surface_water' => $planetData['surface_water'] ?? null,
-                        'population' => $planetData['population'] ?? null,
+                        'orbital_period'  => $planetData['orbital_period'] ?? null,
+                        'diameter'        => $planetData['diameter'] ?? null,
+                        'climate'         => $planetData['climate'] ?? null,
+                        'gravity'         => $planetData['gravity'] ?? null,
+                        'terrain'         => $planetData['terrain'] ?? null,
+                        'surface_water'   => $planetData['surface_water'] ?? null,
+                        'population'      => $planetData['population'] ?? null,
                     ]
                 );
                 $planetId = $planet->id;
@@ -64,16 +72,16 @@ class SwapiController extends Controller
 
             // Crear el personaje
             $character = Character::create([
-                'id'          => $id, // Usar el id de SWAPI
-                'name'        => $data['name'],
-                'height'      => $data['height'],
-                'mass'        => $data['mass'],
-                'hair_color'  => $data['hair_color'],
-                'skin_color'  => $data['skin_color'],
-                'eye_color'   => $data['eye_color'],
-                'birth_year'  => $data['birth_year'],
-                'gender'      => $data['gender'],
-                'planet_id'   => $planetId,
+                'id'         => $id, // Usar el id de SWAPI
+                'name'       => $data['name'],
+                'height'     => $data['height'],
+                'mass'       => $data['mass'],
+                'hair_color' => $data['hair_color'],
+                'skin_color' => $data['skin_color'],
+                'eye_color'  => $data['eye_color'],
+                'birth_year' => $data['birth_year'],
+                'gender'     => $data['gender'],
+                'planet_id'  => $planetId,
             ]);
 
             // Relacionar películas
@@ -97,6 +105,12 @@ class SwapiController extends Controller
             }
 
             DB::commit();
+            // Registrar log de búsqueda luego de crear el personaje
+            SearchLog::create([
+                'user_id'     => $request->user()->id,
+                'search_type' => 'character',
+                'search_id'   => $id,
+            ]);
             return response()->json($character->load(['planet', 'films']), 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -105,14 +119,20 @@ class SwapiController extends Controller
     }
 
     /**
-     * Obtiene un planeta. Si ya existe en la base de datos, se retorna;
+     * Obtiene un planeta. Si ya existe en la base de datos se retorna;
      * de lo contrario se consulta SWAPI, se almacena y se relaciona con los personajes (residentes).
+     * Se registra en search_logs la consulta.
      */
     public function getPlanet(Request $request, $id)
     {
-        // Revisar si el planeta ya existe en DB
-        $planet = Planet::with('characters')->where('id', $id)->first();
+        $planet = Planet::with('characters')->find($id);
         if ($planet) {
+            // Registrar log de búsqueda
+            SearchLog::create([
+                'user_id'     => $request->user()->id,
+                'search_type' => 'planet',
+                'search_id'   => $id,
+            ]);
             return response()->json($planet);
         }
 
@@ -163,6 +183,12 @@ class SwapiController extends Controller
             }
 
             DB::commit();
+            // Registrar log de búsqueda luego de crear el planeta
+            SearchLog::create([
+                'user_id'     => $request->user()->id,
+                'search_type' => 'planet',
+                'search_id'   => $id,
+            ]);
             return response()->json($planet->load('characters'), 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -171,14 +197,20 @@ class SwapiController extends Controller
     }
 
     /**
-     * Obtiene una película. Si ya existe en la base de datos, se retorna;
+     * Obtiene una película. Si ya existe en la base de datos se retorna;
      * de lo contrario se consulta SWAPI, se almacena y se relaciona con personajes y planetas.
+     * Se registra en search_logs la consulta.
      */
     public function getFilm(Request $request, $id)
     {
-        // Revisar si la película ya existe en DB
-        $film = Film::with(['characters', 'planets'])->where('id', $id)->first();
+        $film = Film::with(['characters', 'planets'])->find($id);
         if ($film) {
+            // Registrar log de búsqueda
+            SearchLog::create([
+                'user_id'     => $request->user()->id,
+                'search_type' => 'film',
+                'search_id'   => $id,
+            ]);
             return response()->json($film);
         }
 
@@ -190,12 +222,12 @@ class SwapiController extends Controller
         DB::beginTransaction();
         try {
             $film = Film::create([
-                'id'             => $id, // Usar el id de SWAPI
-                'title'          => $data['title'],
-                'opening_crawl'  => $data['opening_crawl'] ?? null,
-                'director'       => $data['director'] ?? null,
-                'producer'       => $data['producer'] ?? null,
-                'release_date'   => $data['release_date'] ?? null,
+                'id'            => $id, // Usar el id de SWAPI
+                'title'         => $data['title'],
+                'opening_crawl' => $data['opening_crawl'] ?? null,
+                'director'      => $data['director'] ?? null,
+                'producer'      => $data['producer'] ?? null,
+                'release_date'  => $data['release_date'] ?? null,
             ]);
 
             // Relacionar personajes
@@ -210,8 +242,7 @@ class SwapiController extends Controller
                             // Procesar homeworld del personaje
                             $planetId = null;
                             if (isset($characterData['homeworld']) && $characterData['homeworld']) {
-                                $planetUrl = $characterData['homeworld'];
-                                $planetUrlParts = explode('/', trim($planetUrl, '/'));
+                                $planetUrlParts = explode('/', trim($characterData['homeworld'], '/'));
                                 $planetSwapiId = end($planetUrlParts);
                                 $planetData = $this->swapi->getPlanet($planetSwapiId);
                                 $planet = Planet::firstOrCreate(
@@ -276,6 +307,12 @@ class SwapiController extends Controller
             }
 
             DB::commit();
+            // Registrar log de búsqueda luego de crear la película
+            SearchLog::create([
+                'user_id'     => $request->user()->id,
+                'search_type' => 'film',
+                'search_id'   => $id,
+            ]);
             return response()->json($film->load(['characters', 'planets']), 201);
         } catch (\Exception $e) {
             DB::rollBack();
