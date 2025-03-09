@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Planet extends Model
 {
+    use HasFactory;
+    
     protected $fillable = [
+        'id',
         'name',
         'rotation_period',
         'orbital_period',
@@ -17,16 +21,16 @@ class Planet extends Model
         'surface_water',
         'population'
     ];
+    
+    public $incrementing = false;
 
-    // Relación: Un planeta puede tener varios personajes
     public function characters()
     {
         return $this->hasMany(Character::class);
     }
-
-    // Relación: Un planeta puede estar en varias películas (muchos a muchos)
+    
     public function films()
     {
-        return $this->belongsToMany(Film::class, 'film_planet');
+        return $this->belongsToMany(Film::class, 'film_planet')->withTimestamps();
     }
 }

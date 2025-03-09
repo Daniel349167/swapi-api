@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
-    /**
-     * Asigna un rol a un usuario.
-     */
     public function assignRole(Request $request)
     {
         $request->validate([
@@ -27,9 +24,6 @@ class AdminController extends Controller
         return response()->json(['message' => 'Rol asignado correctamente.']);
     }
 
-    /**
-     * Revoca el rol de un usuario.
-     */
     public function revokeRole(Request $request, $userId)
     {
         $user = User::findOrFail($userId);
@@ -39,9 +33,6 @@ class AdminController extends Controller
         return response()->json(['message' => 'Rol revocado correctamente.']);
     }
 
-    /**
-     * Crea un nuevo usuario.
-     */
     public function createUser(Request $request)
     {
         $request->validate([
@@ -61,9 +52,6 @@ class AdminController extends Controller
         return response()->json(['message' => 'Usuario creado correctamente.', 'user' => $user], 201);
     }
 
-    /**
-     * Actualiza la información de un usuario.
-     */
     public function updateUser(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -93,9 +81,6 @@ class AdminController extends Controller
         return response()->json(['message' => 'Usuario actualizado correctamente.', 'user' => $user]);
     }
 
-    /**
-     * Elimina un usuario.
-     */
     public function deleteUser($id)
     {
         $user = User::findOrFail($id);
@@ -104,11 +89,6 @@ class AdminController extends Controller
         return response()->json(['message' => 'Usuario eliminado correctamente.']);
     }
 
-    /**
-     * Obtiene el historial de consultas de un usuario.
-     * Si se pasa un ID de usuario, filtra las consultas de ese usuario;
-     * de lo contrario, retorna todos los logs.
-     */
     public function getLogsByUser(Request $request, $userId = null)
     {
         if ($userId) {

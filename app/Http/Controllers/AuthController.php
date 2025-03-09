@@ -15,18 +15,15 @@ class AuthController extends Controller
             'name' => 'required|string',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'sometimes|string' // Opcional para asignar rol
+            'role' => 'sometimes|string'
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            // Si implementas roles
             'role_id' => $request->role_id ?? null,
         ]);
-
-        // También podrías asignar un rol por default
 
         return response()->json([
             'message' => 'Usuario registrado correctamente.',
@@ -49,7 +46,6 @@ class AuthController extends Controller
             ]);
         }
 
-        // Crear token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

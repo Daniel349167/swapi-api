@@ -2,27 +2,31 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Film extends Model
 {
+    use HasFactory;
+    
     protected $fillable = [
+        'id',
         'title',
         'opening_crawl',
         'director',
         'producer',
         'release_date'
     ];
+    
+    public $incrementing = false;
 
-    // Relación: Una película puede tener varios personajes (muchos a muchos)
     public function characters()
     {
-        return $this->belongsToMany(Character::class, 'character_film');
+        return $this->belongsToMany(Character::class, 'character_film')->withTimestamps();
     }
-
-    // Relación: Una película puede incluir varios planetas (muchos a muchos)
+    
     public function planets()
     {
-        return $this->belongsToMany(Planet::class, 'film_planet');
+        return $this->belongsToMany(Planet::class, 'film_planet')->withTimestamps();
     }
 }

@@ -12,12 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Agregar EnsureFrontendRequestsAreStateful al grupo 'api'
         $middleware->group('api', [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
-
-        // Registrar alias de middleware en forma de array
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);

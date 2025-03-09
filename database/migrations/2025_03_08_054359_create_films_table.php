@@ -5,13 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    /**
-     * Ejecuta las migraciones.
-     */
     public function up(): void
     {
         Schema::create('films', function (Blueprint $table) {
-            $table->id();
+            $table->unsignedBigInteger('id')->primary();
             $table->string('title');
             $table->text('opening_crawl')->nullable();
             $table->string('director')->nullable();
@@ -21,9 +18,6 @@ return new class extends Migration {
         });
     }
 
-    /**
-     * Revierte las migraciones.
-     */
     public function down(): void
     {
         Schema::dropIfExists('films');

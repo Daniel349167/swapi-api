@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Vehicle extends Model
 {
+    use HasFactory;
+    
     protected $fillable = [
         'name',
         'model',
@@ -20,9 +23,8 @@ class Vehicle extends Model
         'vehicle_class'
     ];
 
-    // Relación: Un vehículo puede ser usado por varios personajes (muchos a muchos)
     public function characters()
     {
-        return $this->belongsToMany(Character::class, 'character_vehicle');
+        return $this->belongsToMany(Character::class, 'character_vehicle')->withTimestamps();
     }
 }
