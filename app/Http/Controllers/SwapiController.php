@@ -13,18 +13,41 @@ use Illuminate\Support\Facades\DB;
 class SwapiController extends Controller
 {
     protected $swapi;
+    
     public function __construct(SwapiService $swapi)
     {
         $this->swapi = $swapi;
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/character/{id}",
+     *     summary="Obtener y almacenar un personaje",
+     *     tags={"SWAPI"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID del personaje en SWAPI",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Personaje almacenado y retornado correctamente",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(response=404, description="Personaje no encontrado")
+     * )
+     */
     public function getCharacter(Request $request, $id)
     {
         $character = Character::with(['planet', 'films', 'vehicles', 'species'])->find($id);
         if ($character) {
             SearchLog::create([
-                'user_id' => $request->user()->id,
+                'user_id'     => $request->user()->id,
                 'search_type' => 'character',
-                'search_id' => $id,
+                'search_id'   => $id,
             ]);
             return response()->json($character);
         }
@@ -43,30 +66,30 @@ class SwapiController extends Controller
                 $planet = Planet::firstOrCreate(
                     ['id' => $planetSwapiId],
                     [
-                        'name' => $planetData['name'],
+                        'name'            => $planetData['name'],
                         'rotation_period' => $planetData['rotation_period'] ?? null,
-                        'orbital_period' => $planetData['orbital_period'] ?? null,
-                        'diameter' => $planetData['diameter'] ?? null,
-                        'climate' => $planetData['climate'] ?? null,
-                        'gravity' => $planetData['gravity'] ?? null,
-                        'terrain' => $planetData['terrain'] ?? null,
-                        'surface_water' => $planetData['surface_water'] ?? null,
-                        'population' => $planetData['population'] ?? null,
+                        'orbital_period'  => $planetData['orbital_period'] ?? null,
+                        'diameter'        => $planetData['diameter'] ?? null,
+                        'climate'         => $planetData['climate'] ?? null,
+                        'gravity'         => $planetData['gravity'] ?? null,
+                        'terrain'         => $planetData['terrain'] ?? null,
+                        'surface_water'   => $planetData['surface_water'] ?? null,
+                        'population'      => $planetData['population'] ?? null,
                     ]
                 );
                 $planetId = $planet->id;
             }
             $character = Character::create([
-                'id' => $id,
-                'name' => $data['name'],
-                'height' => $data['height'],
-                'mass' => $data['mass'],
+                'id'         => $id,
+                'name'       => $data['name'],
+                'height'     => $data['height'],
+                'mass'       => $data['mass'],
                 'hair_color' => $data['hair_color'],
                 'skin_color' => $data['skin_color'],
-                'eye_color' => $data['eye_color'],
+                'eye_color'  => $data['eye_color'],
                 'birth_year' => $data['birth_year'],
-                'gender' => $data['gender'],
-                'planet_id' => $planetId,
+                'gender'     => $data['gender'],
+                'planet_id'  => $planetId,
             ]);
             if (isset($data['films']) && is_array($data['films'])) {
                 foreach ($data['films'] as $filmUrl) {
@@ -76,11 +99,11 @@ class SwapiController extends Controller
                     $film = Film::firstOrCreate(
                         ['id' => $filmSwapiId],
                         [
-                            'title' => $filmData['title'],
-                            'opening_crawl' => $filmData['opening_crawl'] ?? null,
-                            'director' => $filmData['director'] ?? null,
-                            'producer' => $filmData['producer'] ?? null,
-                            'release_date' => $filmData['release_date'] ?? null,
+                            'title'          => $filmData['title'],
+                            'opening_crawl'  => $filmData['opening_crawl'] ?? null,
+                            'director'       => $filmData['director'] ?? null,
+                            'producer'       => $filmData['producer'] ?? null,
+                            'release_date'   => $filmData['release_date'] ?? null,
                         ]
                     );
                     $character->films()->syncWithoutDetaching([$film->id]);
@@ -88,9 +111,9 @@ class SwapiController extends Controller
             }
             DB::commit();
             SearchLog::create([
-                'user_id' => $request->user()->id,
+                'user_id'     => $request->user()->id,
                 'search_type' => 'character',
-                'search_id' => $id,
+                'search_id'   => $id,
             ]);
             return response()->json($character->load(['planet', 'films']), 201);
         } catch (\Exception $e) {
@@ -98,14 +121,36 @@ class SwapiController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/planet/{id}",
+     *     summary="Obtener y almacenar un planeta",
+     *     tags={"SWAPI"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID del planeta en SWAPI",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Planeta almacenado y retornado correctamente",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(response=404, description="Planeta no encontrado")
+     * )
+     */
     public function getPlanet(Request $request, $id)
     {
         $planet = Planet::with('characters')->find($id);
         if ($planet) {
             SearchLog::create([
-                'user_id' => $request->user()->id,
+                'user_id'     => $request->user()->id,
                 'search_type' => 'planet',
-                'search_id' => $id,
+                'search_id'   => $id,
             ]);
             return response()->json($planet);
         }
@@ -116,16 +161,16 @@ class SwapiController extends Controller
         DB::beginTransaction();
         try {
             $planet = Planet::create([
-                'id' => $id,
-                'name' => $data['name'],
+                'id'              => $id,
+                'name'            => $data['name'],
                 'rotation_period' => $data['rotation_period'] ?? null,
-                'orbital_period' => $data['orbital_period'] ?? null,
-                'diameter' => $data['diameter'] ?? null,
-                'climate' => $data['climate'] ?? null,
-                'gravity' => $data['gravity'] ?? null,
-                'terrain' => $data['terrain'] ?? null,
-                'surface_water' => $data['surface_water'] ?? null,
-                'population' => $data['population'] ?? null,
+                'orbital_period'  => $data['orbital_period'] ?? null,
+                'diameter'        => $data['diameter'] ?? null,
+                'climate'         => $data['climate'] ?? null,
+                'gravity'         => $data['gravity'] ?? null,
+                'terrain'         => $data['terrain'] ?? null,
+                'surface_water'   => $data['surface_water'] ?? null,
+                'population'      => $data['population'] ?? null,
             ]);
             if (isset($data['residents']) && is_array($data['residents'])) {
                 foreach ($data['residents'] as $residentUrl) {
@@ -136,16 +181,16 @@ class SwapiController extends Controller
                         $characterData = $this->swapi->getPerson($characterSwapiId);
                         if (isset($characterData['name'])) {
                             $character = Character::create([
-                                'id' => $characterSwapiId,
-                                'name' => $characterData['name'],
-                                'height' => $characterData['height'],
-                                'mass' => $characterData['mass'],
+                                'id'         => $characterSwapiId,
+                                'name'       => $characterData['name'],
+                                'height'     => $characterData['height'],
+                                'mass'       => $characterData['mass'],
                                 'hair_color' => $characterData['hair_color'],
                                 'skin_color' => $characterData['skin_color'],
-                                'eye_color' => $characterData['eye_color'],
+                                'eye_color'  => $characterData['eye_color'],
                                 'birth_year' => $characterData['birth_year'],
-                                'gender' => $characterData['gender'],
-                                'planet_id' => $id,
+                                'gender'     => $characterData['gender'],
+                                'planet_id'  => $id,
                             ]);
                         }
                     }
@@ -153,9 +198,9 @@ class SwapiController extends Controller
             }
             DB::commit();
             SearchLog::create([
-                'user_id' => $request->user()->id,
+                'user_id'     => $request->user()->id,
                 'search_type' => 'planet',
-                'search_id' => $id,
+                'search_id'   => $id,
             ]);
             return response()->json($planet->load('characters'), 201);
         } catch (\Exception $e) {
@@ -163,14 +208,36 @@ class SwapiController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/film/{id}",
+     *     summary="Obtener y almacenar una película",
+     *     tags={"SWAPI"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID de la película en SWAPI",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Película almacenada y retornada correctamente",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(response=404, description="Película no encontrada")
+     * )
+     */
     public function getFilm(Request $request, $id)
     {
         $film = Film::with(['characters', 'planets'])->find($id);
         if ($film) {
             SearchLog::create([
-                'user_id' => $request->user()->id,
+                'user_id'     => $request->user()->id,
                 'search_type' => 'film',
-                'search_id' => $id,
+                'search_id'   => $id,
             ]);
             return response()->json($film);
         }
@@ -181,12 +248,12 @@ class SwapiController extends Controller
         DB::beginTransaction();
         try {
             $film = Film::create([
-                'id' => $id,
-                'title' => $data['title'],
-                'opening_crawl' => $data['opening_crawl'] ?? null,
-                'director' => $data['director'] ?? null,
-                'producer' => $data['producer'] ?? null,
-                'release_date' => $data['release_date'] ?? null,
+                'id'             => $id,
+                'title'          => $data['title'],
+                'opening_crawl'  => $data['opening_crawl'] ?? null,
+                'director'       => $data['director'] ?? null,
+                'producer'       => $data['producer'] ?? null,
+                'release_date'   => $data['release_date'] ?? null,
             ]);
             if (isset($data['characters']) && is_array($data['characters'])) {
                 foreach ($data['characters'] as $characterUrl) {
@@ -204,30 +271,30 @@ class SwapiController extends Controller
                                 $planet = Planet::firstOrCreate(
                                     ['id' => $planetSwapiId],
                                     [
-                                        'name' => $planetData['name'],
+                                        'name'            => $planetData['name'],
                                         'rotation_period' => $planetData['rotation_period'] ?? null,
-                                        'orbital_period' => $planetData['orbital_period'] ?? null,
-                                        'diameter' => $planetData['diameter'] ?? null,
-                                        'climate' => $planetData['climate'] ?? null,
-                                        'gravity' => $planetData['gravity'] ?? null,
-                                        'terrain' => $planetData['terrain'] ?? null,
-                                        'surface_water' => $planetData['surface_water'] ?? null,
-                                        'population' => $planetData['population'] ?? null,
+                                        'orbital_period'  => $planetData['orbital_period'] ?? null,
+                                        'diameter'        => $planetData['diameter'] ?? null,
+                                        'climate'         => $planetData['climate'] ?? null,
+                                        'gravity'         => $planetData['gravity'] ?? null,
+                                        'terrain'         => $planetData['terrain'] ?? null,
+                                        'surface_water'   => $planetData['surface_water'] ?? null,
+                                        'population'      => $planetData['population'] ?? null,
                                     ]
                                 );
                                 $planetId = $planet->id;
                             }
                             $character = Character::create([
-                                'id' => $characterSwapiId,
-                                'name' => $characterData['name'],
-                                'height' => $characterData['height'],
-                                'mass' => $characterData['mass'],
+                                'id'         => $characterSwapiId,
+                                'name'       => $characterData['name'],
+                                'height'     => $characterData['height'],
+                                'mass'       => $characterData['mass'],
                                 'hair_color' => $characterData['hair_color'],
                                 'skin_color' => $characterData['skin_color'],
-                                'eye_color' => $characterData['eye_color'],
+                                'eye_color'  => $characterData['eye_color'],
                                 'birth_year' => $characterData['birth_year'],
-                                'gender' => $characterData['gender'],
-                                'planet_id' => $planetId,
+                                'gender'     => $characterData['gender'],
+                                'planet_id'  => $planetId,
                             ]);
                         }
                     }
@@ -243,16 +310,16 @@ class SwapiController extends Controller
                         $planetData = $this->swapi->getPlanet($planetSwapiId);
                         if (isset($planetData['name'])) {
                             $planet = Planet::create([
-                                'id' => $planetSwapiId,
-                                'name' => $planetData['name'],
+                                'id'              => $planetSwapiId,
+                                'name'            => $planetData['name'],
                                 'rotation_period' => $planetData['rotation_period'] ?? null,
-                                'orbital_period' => $planetData['orbital_period'] ?? null,
-                                'diameter' => $planetData['diameter'] ?? null,
-                                'climate' => $planetData['climate'] ?? null,
-                                'gravity' => $planetData['gravity'] ?? null,
-                                'terrain' => $planetData['terrain'] ?? null,
-                                'surface_water' => $planetData['surface_water'] ?? null,
-                                'population' => $planetData['population'] ?? null,
+                                'orbital_period'  => $planetData['orbital_period'] ?? null,
+                                'diameter'        => $planetData['diameter'] ?? null,
+                                'climate'         => $planetData['climate'] ?? null,
+                                'gravity'         => $planetData['gravity'] ?? null,
+                                'terrain'         => $planetData['terrain'] ?? null,
+                                'surface_water'   => $planetData['surface_water'] ?? null,
+                                'population'      => $planetData['population'] ?? null,
                             ]);
                         }
                     }
@@ -261,9 +328,9 @@ class SwapiController extends Controller
             }
             DB::commit();
             SearchLog::create([
-                'user_id' => $request->user()->id,
+                'user_id'     => $request->user()->id,
                 'search_type' => 'film',
-                'search_id' => $id,
+                'search_id'   => $id,
             ]);
             return response()->json($film->load(['characters', 'planets']), 201);
         } catch (\Exception $e) {
